@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Merge Cubes — Suika Style</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="ui">
+    <div id="topbar">
+      <div id="nextWrapper">
+        <div id="nextLabel">Próximo</div>
+        <div id="nextPreview"></div>
+        <canvas id="aimCanvas"></canvas>
+      </div>
+      <div id="controls">
+        <button id="btnReset">Reiniciar</button>
+        <div id="info">Arrastra el "Próximo" para apuntar, suelta para lanzar.</div>
+      </div>
+    </div>
+  </div>
+
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- WIN overlay -->
+  <div id="winOverlay" class="hidden">
+    <div id="winBox">
+      <h1>¡GANASTE!</h1>
+      <p>Fusionaste dos cube10 🎉</p>
+      <button id="btnWinReset">Restablecer</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

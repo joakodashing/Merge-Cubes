@@ -1,0 +1,48 @@
+:root{
+  --bg:#0b1220;
+  --panel:#0f1724;
+  --accent:#7c3aed;
+  --uiText:#e6eef8;
+}
+
+*{box-sizing:border-box;touch-action:none}
+html,body{height:100%;margin:0;font-family:Inter,Arial,Helvetica,sans-serif;background:var(--bg);color:var(--uiText)}
+#ui{position:fixed;left:0;right:0;top:6px;display:flex;justify-content:center;pointer-events:none;z-index:20}
+#topbar{width:100%;max-width:960px;display:flex;justify-content:space-between;gap:12px;padding:6px 12px;align-items:center;pointer-events:auto}
+#nextWrapper{display:flex;flex-direction:column;align-items:center;gap:6px}
+#nextLabel{font-size:12px;color:rgba(230,238,248,0.75)}
+#nextPreview{
+  width:64px;height:64px;border-radius:8px;background:rgba(255,255,255,0.03);
+  display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;
+  box-shadow:0 6px 18px rgba(2,6,23,0.6);
+}
+#aimCanvas{position:absolute;left:0;top:0;width:64px;height:64px;pointer-events:none}
+#controls{display:flex;gap:10px;align-items:center}
+#controls button{background:var(--accent);border:0;padding:8px 12px;border-radius:10px;color:white;cursor:pointer}
+#controls .info{font-size:13px;color:rgba(230,238,248,0.75)}
+
+#gameCanvas{
+  display:block;
+  margin:90px auto 24px;
+  background: linear-gradient(180deg,#071029 0%, #081726 100%);
+  width: calc(min(960px, 96vw));
+  height: calc(min(1600px, 96vh - 120px));
+  max-height: calc(96vh - 120px);
+  border-radius:12px;
+  box-shadow: 0 16px 40px rgba(2,6,23,0.7);
+  touch-action: none;
+}
+
+/* WIN overlay */
+#winOverlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(1,2,6,0.6);z-index:50}
+#winOverlay.hidden{display:none}
+#winBox{background:linear-gradient(180deg,#0f1724,#071022);padding:22px;border-radius:12px;box-shadow:0 10px 40px rgba(2,6,23,0.7);text-align:center;color:var(--uiText)}
+#winBox h1{margin:0 0 8px 0;font-size:28px}
+#winBox p{margin:0 0 14px 0}
+#winBox button{background:var(--accent);border:0;padding:8px 14px;border-radius:10px;color:white;cursor:pointer}
+
+/* small screens adjust */
+@media (max-width:420px){
+  #nextPreview{width:56px;height:56px}
+  #aimCanvas{width:56px;height:56px}
+}
