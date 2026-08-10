@@ -253,13 +253,22 @@ function getHitOverlap(a, b) {
   };
 }
 
-// ---------- physics step ----------
+// ---------- physics step STABLE (ANTI-GLITCH) ----------
 function step(dt){
+  const MAX_SPEED = 15; // 🛑 Límite máximo de velocidad para evitar que salgan disparados
+
   for (let o of objects){
     o.vy += GRAVITY * dt;
     o.x += o.vx * dt;
     o.y += o.vy * dt;
     o.vx *= FRICTION;
+
+    // Control de velocidad máxima (Speed Clamping)
+    if (o.vx > MAX_SPEED) o.vx = MAX_SPEED;
+    if (o.vx < -MAX_SPEED) o.vx = -MAX_SPEED;
+    if (o.vy > MAX_SPEED) o.vy = MAX_SPEED;
+    if (o.vy < -MAX_SPEED) o.vy = -MAX_SPEED;
+
     if (o.x < 0){ o.x = 0; o.vx = -o.vx * RESTITUTION; }
     if (o.x + o.w > width){ o.x = width - o.w; o.vx = -o.vx * RESTITUTION; }
     if (o.y + o.h > height){
@@ -277,17 +286,19 @@ function step(dt){
       if (hitOverlap(a,b)){
         const overlap = getHitOverlap(a,b);
         if (!overlap) continue;
+        
+        // Separación física inmediata para evitar que se queden atorados
         if (Math.abs(overlap.x) < Math.abs(overlap.y)){
           const sep = overlap.x;
-          a.x -= sep/2;
-          b.x += sep/2;
+          a.x -= sep * 0.51; // Un 1% extra evita que se queden solapados en el siguiente cuadro
+          b.x += sep * 0.51;
           const vx1 = a.vx, vx2 = b.vx;
           a.vx = vx2 * RESTITUTION;
           b.vx = vx1 * RESTITUTION;
         } else {
           const sep = overlap.y;
-          a.y -= sep/2;
-          b.y += sep/2;
+          a.y -= sep * 0.51;
+          b.y += sep * 0.51;
           const vy1 = a.vy, vy2 = b.vy;
           a.vy = vy2 * RESTITUTION;
           b.vy = vy1 * RESTITUTION;
