@@ -1,5 +1,6 @@
-// Desestructuración de herramientas de Matter.js
-const { Engine, Render, Runner, Bodies, Composite, Events, Body } = Matter;
+window.addEventListener("DOMContentLoaded", () => {
+  // Aquí empieza tu código de Matter.js...
+  const { Engine, Render, Runner, Bodies, Composite, Events, Body } = Matter;
 
 // ---------- CONFIGURACIÓN ----------
 const IMAGE_FOLDER = "images";
