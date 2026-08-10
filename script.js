@@ -1,403 +1,167 @@
-let puntaje = 0;
+// Desestructuración de herramientas de Matter.js
+const { Engine, Render, Runner, Bodies, Composite, Events, Body } = Matter;
 
-/* script.js — Merge Cubes Suika-like (square hitboxes, visual scaling)
-   Put images in: images/cube1.png ... images/cube10.png
-*/
-
-// ---------- CONFIG ----------
-const IMAGE_FOLDER = "images"; // El "./" fuerza a GitHub a buscar en la ruta correcta del repositorio
+// ---------- CONFIGURACIÓN ----------
+const IMAGE_FOLDER = "images";
 const MAX_LEVEL = 10;
+let puntaje = 0;
+let nextLevel = randomSpawnLevel();
 
-// visual sizes (pixels) for each level (index by level)
-const VISUAL_SIZE = {
-  1: 80,
-  2: 90,
-  3: 100,
-  4: 110,
-  5: 120,
-  6: 128,
-  7: 135,
-  8: 145,
-  9: 155,
-  10:165
+// Dimensiones de la pantalla de juego
+const WIDTH = 480;
+const HEIGHT = 720;
+
+// Tamaños exactos para las imágenes y colisiones de cada nivel (Mismo tamaño para evitar glitches)
+const CUBE_SIZES = {
+  1: 45, 2: 55, 3: 65, 4: 75, 5: 85, 
+  6: 95, 7: 105, 8: 115, 9: 125, 10: 140
 };
 
-// hitbox sizes (internal collision square), max 85px as requested
-const HITBOX_SIZE = {
-  1: 80,
-  2: 90,
-  3: 100,
-  4: 110,
-  5: 120,
-  6: 128,
-  7: 135,
-  8: 145,
-  9: 155,
-  10:165
-};
-
-const GRAVITY = 0.9;
-const RESTITUTION = 0.32; // bounce
-const FRICTION = 0.995;
-const SPAWN_Y = 60; // spawn vertical position (higher)
-const NEXT_PREVIEW_SIZE = 64; // px
-
-// spawn probabilities for levels 1..3
-function randomSpawnLevel(){
+// Generador de niveles para los nuevos cubos (1 al 3)
+function randomSpawnLevel() {
   const r = Math.random();
   if (r < 0.6) return 1;
   if (r < 0.9) return 2;
   return 3;
 }
 
-// ---------- DOM & CANVAS ----------
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
-const nextPreview = document.getElementById("nextPreview");
-const aimCanvas = document.getElementById("aimCanvas");
-const aimCtx = aimCanvas.getContext("2d");
-const btnReset = document.getElementById("btnReset");
-const winOverlay = document.getElementById("winOverlay");
-const btnWinReset = document.getElementById("btnWinReset");
+// ---------- INICIALIZACIÓN DE MATTER.JS ----------
+const engine = Engine.create({ gravity: { y: 1.2 } }); // Gravedad hacia abajo estable
+const world = engine.world;
 
-let width = 800, height = 1200;
-function resizeCanvas(){
-  const parentW = Math.min(window.innerWidth * 0.96, 960);
-  const parentH = Math.min(window.innerHeight * 0.84, 1600);
-  canvas.style.width = parentW + "px";
-  canvas.style.height = parentH + "px";
-  canvas.width = Math.round(parentW * devicePixelRatio);
-  canvas.height = Math.round(parentH * devicePixelRatio);
-  ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
-  width = parentW;
-  height = parentH;
-  aimCanvas.width = aimCanvas.clientWidth;
-  aimCanvas.height = aimCanvas.clientHeight;
-}
-window.addEventListener('resize', resizeCanvas);
-resizeCanvas();
-
-// ---------- preload images ----------
-const images = {};
-for (let i=1;i<=MAX_LEVEL;i++){
-  const img = new Image();
-  img.src = `${IMAGE_FOLDER}/cube${i}.png`;
-  img.onload = ()=> { images[i] = img; };
-  img.onerror = ()=> { images[i] = null; }; // graceful fallback
-}
-
-// ---------- state ----------
-let objects = []; // {id, x,y, vx,vy, level, w,h, hitW, hitH, _remove}
-let nextLevel = randomSpawnLevel();
-let dragState = null; // {id,startX,startY,x,y}
-let lastTime = 0;
-let idcnt = 1;
-let win = false;
-
-// ---------- helper: render next preview ----------
-function renderNextPreview(){
-  nextPreview.innerHTML = "";
-  if (images[nextLevel]) {
-    const node = document.createElement("img");
-    node.src = images[nextLevel].src;
-    node.style.width = "100%";
-    node.style.height = "100%";
-    node.style.objectFit = "cover";
-    nextPreview.appendChild(node);
-  } else {
-    const lbl = document.createElement("div");
-    lbl.style.width = "100%";
-    lbl.style.height = "100%";
-    lbl.style.display = "flex";
-    lbl.style.alignItems = "center";
-    lbl.style.justifyContent = "center";
-    lbl.style.background = "#666";
-    lbl.style.color = "white";
-    lbl.style.fontWeight = "700";
-    lbl.textContent = "L" + nextLevel;
-    nextPreview.appendChild(lbl);
+const render = Render.create({
+  element: document.getElementById("game-container"),
+  engine: engine,
+  options: {
+    width: WIDTH,
+    height: HEIGHT,
+    wireframes: false, // Desactivado para que use las imágenes comerciales reales
+    background: '#141414'
   }
-}
-renderNextPreview();
+});
 
-// ---------- input on preview to aim & launch ----------
-function getPointer(ev){
-  if (ev.touches && ev.touches.length>0) return {id: ev.touches[0].identifier, x: ev.touches[0].clientX, y: ev.touches[0].clientY};
-  if (ev.changedTouches && ev.changedTouches.length>0) return {id: ev.changedTouches[0].identifier, x: ev.changedTouches[0].clientX, y: ev.changedTouches[0].clientY};
-  return {id: "mouse", x: ev.clientX, y: ev.clientY};
-}
+Render.run(render);
+const runner = Runner.create();
+Runner.run(runner, engine);
 
-let nextPreviewRect = nextPreview.getBoundingClientRect();
-window.addEventListener('resize', ()=> nextPreviewRect = nextPreview.getBoundingClientRect());
+// Crear los límites físicos de la caja (Paredes invisibles pero sólidas)
+const suelo = Bodies.rectangle(WIDTH / 2, HEIGHT + 30, WIDTH, 60, { isStatic: true });
+const paredIzquierda = Bodies.rectangle(-30, HEIGHT / 2, 60, HEIGHT, { isStatic: true });
+const paredDerecha = Bodies.rectangle(WIDTH + 30, HEIGHT / 2, 60, HEIGHT, { isStatic: true });
+Composite.add(world, [suelo, paredIzquierda, paredDerecha]);
 
-function startPreviewDrag(ev){
-  ev.preventDefault();
-  if (win) return;
-  dragState = getPointer(ev);
-  drawAim();
-}
-function movePreviewDrag(ev){
-  if (!dragState) return;
-  const p = getPointer(ev);
-  dragState.x = p.x; dragState.y = p.y;
-  drawAim();
-}
-function endPreviewDrag(ev){
-  if (!dragState) return;
-  const p = getPointer(ev);
-  dragState.x = p.x; dragState.y = p.y;
-  launchFromPreview();
-  dragState = null;
-  clearAim();
-}
-
-nextPreview.addEventListener('mousedown', startPreviewDrag);
-window.addEventListener('mousemove', movePreviewDrag);
-window.addEventListener('mouseup', endPreviewDrag);
-
-nextPreview.addEventListener('touchstart', startPreviewDrag, {passive:false});
-window.addEventListener('touchmove', movePreviewDrag, {passive:false});
-window.addEventListener('touchend', endPreviewDrag);
-
-// aim drawing
-function drawAim(){
-  if (!dragState) return;
-  const pr = nextPreview.getBoundingClientRect();
-  const cx = pr.left + pr.width/2;
-  const cy = pr.top + pr.height/2;
-  const dx = dragState.x - cx;
-  const dy = dragState.y - cy;
-  aimCtx.clearRect(0,0,aimCanvas.width,aimCanvas.height);
-  aimCtx.save();
-  aimCtx.translate(aimCanvas.width/2, aimCanvas.height/2);
-  aimCtx.beginPath();
-  aimCtx.moveTo(0,0);
-  const len = Math.min(120, Math.hypot(dx,dy));
-  const nx = (dx / (Math.hypot(dx||1,dy||1))) * (len/2);
-  const ny = (dy / (Math.hypot(dx||1,dy||1))) * (len/2);
-  aimCtx.lineTo(nx, ny);
-  aimCtx.strokeStyle = 'rgba(255,255,255,0.9)';
-  aimCtx.lineWidth = 2;
-  aimCtx.stroke();
-  aimCtx.restore();
-}
-function clearAim(){ aimCtx.clearRect(0,0,aimCanvas.width,aimCanvas.height); }
-
-// ---------- launch logic ----------
-function launchFromPreview(){
-  if (win) return;
-  const pr = nextPreview.getBoundingClientRect();
-  const centerX = pr.left + pr.width/2;
-  const centerY = pr.top + pr.height/2;
-  const tx = dragState ? dragState.x : centerX;
-  const ty = dragState ? dragState.y : centerY;
-  const vx = (centerX - tx) * 0.09;
-  const vy = (centerY - ty) * 0.09;
-  const rect = canvas.getBoundingClientRect();
-  const spawnX = (centerX - rect.left) * (canvas.width / rect.width) / devicePixelRatio;
-  const spawnY = SPAWN_Y;
-  createCube(nextLevel, spawnX - VISUAL_SIZE[nextLevel]/2, spawnY - VISUAL_SIZE[nextLevel]/2, vx, vy);
-  nextLevel = randomSpawnLevel();
-  renderNextPreview();
-}
-
-// ---------- create object ----------
-function createCube(level, x, y, vx=0, vy=0){
-  const visualW = VISUAL_SIZE[level];
-  const visualH = visualW;
-  const hitW = HITBOX_SIZE[level];
-  const hitH = hitW;
-  const obj = {
-    id: idcnt++,
-    level, x, y, w: visualW, h: visualH,
-    hitW, hitH,
-    vx, vy,
-    _remove: false
-  };
-  objects.push(obj);
-  return obj;
-}
-
-// ---------- box helper math functions ----------
-function hitOverlap(a, b) {
-  return (a.x + (a.w - a.hitW)/2 < b.x + (b.w - b.hitW)/2 + b.hitW &&
-          a.x + (a.w - a.hitW)/2 + a.hitW > b.x + (b.w - b.hitW)/2 &&
-          a.y + (a.h - a.hitH)/2 < b.y + (b.h - b.hitH)/2 + b.hitH &&
-          a.y + (a.h - a.hitH)/2 + a.hitH > b.y + (b.h - b.hitH)/2);
-}
-
-function getHitOverlap(a, b) {
-  const ax1 = a.x + (a.w - a.hitW)/2;
-  const ax2 = ax1 + a.hitW;
-  const ay1 = a.y + (a.h - a.hitH)/2;
-  const ay2 = ay1 + a.hitH;
-
-  const bx1 = b.x + (b.w - b.hitW)/2;
-  const bx2 = bx1 + b.hitW;
-  const by1 = b.y + (b.h - b.hitH)/2;
-  const by2 = by1 + b.hitH;
-
-  const overlapX = Math.min(ax2, bx2) - Math.max(ax1, bx1);
-  const overlapY = Math.min(ay2, by2) - Math.max(ay1, by1);
-
-  if (overlapX <= 0 || overlapY <= 0) return null;
-
-  const centerXA = ax1 + a.hitW / 2;
-  const centerXB = bx1 + b.hitW / 2;
-  const centerYA = ay1 + a.hitH / 2;
-  const centerYB = by1 + b.hitH / 2;
-
+// ---------- CONTROL DE IMÁGENES ----------
+function getCubeRenderOptions(level) {
   return {
-    x: centerXA < centerXB ? -overlapX : overlapX,
-    y: centerYA < centerYB ? -overlapY : overlapY
+    sprite: {
+      texture: `${IMAGE_FOLDER}/cube${level}.png`,
+      xScale: CUBE_SIZES[level] / 100, // Ajusta la escala según el tamaño original de tus PNGs (asume 100px base)
+      yScale: CUBE_SIZES[level] / 100
+    }
   };
 }
 
-// ---------- physics step TOTALMENTE ESTABLECIDO (ANTI-GLITCH GENERAL) ----------
-function step(dt){
-  const MAX_SPEED = 12; // Capa de seguridad para evitar velocidades absurdas
+// Actualizar el recuadro visual del siguiente cubo en la UI
+function actualizarPreview() {
+  const previewDiv = document.getElementById("nextPreview");
+  previewDiv.innerHTML = `<img src="${IMAGE_FOLDER}/cube${nextLevel}.png" alt="Siguiente">`;
+}
+actualizarPreview();
 
-  // 1. Aplicar gravedad y limitar velocidad por fotograma
-  for (let o of objects){
-    o.vy += GRAVITY * dt;
-    o.x += o.vx * dt;
-    o.y += o.vy * dt;
-    o.vx *= FRICTION;
+// ---------- LANZAMIENTO DE CUBOS ----------
+window.addEventListener("click", (e) => {
+  // Evitar disparar si se hace clic en el botón de reinicio
+  if (e.target.id === "btnReset") return;
 
-    // Freno de mano automático (Speed Clamping)
-    if (o.vx > MAX_SPEED) o.vx = MAX_SPEED;
-    if (o.vx < -MAX_SPEED) o.vx = -MAX_SPEED;
-    if (o.vy > MAX_SPEED) o.vy = MAX_SPEED;
-    if (o.vy < -MAX_SPEED) o.vy = -MAX_SPEED;
+  const rect = render.canvas.getBoundingClientRect();
+  const clickX = e.clientX - rect.left;
 
-    // Rebotes contra paredes y suelo
-    if (o.x < 0){ o.x = 0; o.vx = -o.vx * RESTITUTION; }
-    if (o.x + o.w > width){ o.x = width - o.w; o.vx = -o.vx * RESTITUTION; }
-    if (o.y + o.h > height){
-      o.y = height - o.h;
-      o.vy = -o.vy * RESTITUTION;
-      if (Math.abs(o.vy) < 0.8) o.vy = 0;
-    }
-    if (o.y < 0){ o.y = 0; o.vy = 0; }
+  // Solo disparar si el clic fue dentro de los márgenes horizontales del canvas
+  if (clickX >= 0 && clickX <= WIDTH) {
+    const size = CUBE_SIZES[nextLevel];
+    
+    // Limitar la posición para que el cubo no nazca traspasando las paredes laterales
+    const spawnX = Math.max(size / 2, Math.min(clickX, WIDTH - size / 2));
+
+    const nuevoCubo = Bodies.rectangle(spawnX, 80, size, size, {
+      restitution: 0.2, // Rebote controlado
+      friction: 0.1,
+      render: getCubeRenderOptions(nextLevel),
+      plugin: { level: nextLevel, id: Math.random() } // Datos personalizados para la lógica
+    });
+
+    Composite.add(world, nuevoCubo);
+
+    // Preparar el siguiente cubo
+    nextLevel = randomSpawnLevel();
+    actualizarPreview();
   }
+});
 
-  // 2. Resolver choques entre CUALQUIER cubo (igual o diferente)
-  for (let i=0;i<objects.length;i++){
-    for (let j=i+1;j<objects.length;j++){
-      const a = objects[i], b = objects[j];
-      if (a._remove || b._remove) continue;
+// ---------- MOTOR DE COLISIONES Y PUNTOS (MATTER.JS) ----------
+Events.on(engine, 'collisionStart', (event) => {
+  event.pairs.forEach((pair) => {
+    const { bodyA, bodyB } = pair;
+
+    // Verificar que ambos objetos sean cubos válidos del juego
+    if (bodyA.plugin && bodyB.plugin && bodyA.plugin.level && bodyB.plugin.level) {
       
-      if (hitOverlap(a,b)){
-        const overlap = getHitOverlap(a,b);
-        if (!overlap) continue;
+      // Si son del mismo nivel, se produce la magia de la fusión
+      if (bodyA.plugin.level === bodyB.plugin.level) {
+        const nivelActual = bodyA.plugin.level;
+        const nuevoNivel = nivelActual + 1;
 
-        // Factor de penetración seguro (0.55): los separa un 5% más para romper el bucle del choque
-        const PUSH_FACTOR = 0.55; 
-
-        // Separación en el eje X
-        if (Math.abs(overlap.x) < Math.abs(overlap.y)){
-          const sep = overlap.x;
-          a.x -= sep * PUSH_FACTOR;
-          b.x += sep * PUSH_FACTOR;
-          
-          // Intercambio de energías elásticas (Rebote real)
-          const vx1 = a.vx, vx2 = b.vx;
-          a.vx = vx2 * RESTITUTION;
-          b.vx = vx1 * RESTITUTION;
-        } 
-        // Separación en el eje Y (Evita que las pilas colapsen y se atraviesen)
-        else {
-          const sep = overlap.y;
-          a.y -= sep * PUSH_FACTOR;
-          b.y += sep * PUSH_FACTOR;
-          
-          const vy1 = a.vy, vy2 = b.vy;
-          // Si el cubo viene cayendo desde arriba, amortiguamos el rebote para que se asiente de forma pesada
-          a.vy = vy2 * RESTITUTION * 0.5;
-          b.vy = vy1 * RESTITUTION * 0.5;
-          
-          if (Math.abs(a.vy) < 0.5) a.vy = 0;
-          if (Math.abs(b.vy) < 0.5) b.vy = 0;
+        // Si no han sido eliminados ya en este fotograma...
+        if (Composite.allBodies(world).includes(bodyA) && Composite.allBodies(world).includes(b)) {
+          return; // Prevenir doble ejecución accidental
         }
 
-        // 3. Si además de chocar son DEL MISMO NIVEL, se fusionan
-        if (a.level === b.level && (Date.now() - a.spawnTime > 200) && (Date.now() - b.spawnTime > 200)) {
-          a._remove = true;
-          b._remove = true;
+        // Eliminar del mundo los dos cubos pequeños de forma limpia
+        Composite.remove(world, bodyA);
+        Composite.remove(world, bodyB);
+
+        // Calcular el punto medio exacto de la colisión para que aparezca ahí el nuevo cubo
+        const midX = (bodyA.position.x + bodyB.position.x) / 2;
+        const midY = (bodyA.position.y + bodyB.position.y) / 2;
+
+        if (nuevoNivel <= MAX_LEVEL) {
+          const nuevoTamaño = CUBE_SIZES[nuevoNivel];
           
-          const midX = (a.x + a.w/2 + b.x + b.w/2) / 2;
-          const midY = (a.y + a.h/2 + b.y + b.h/2) / 2;
-          const nextLvl = a.level + 1;
-          
-          if (nextLvl <= MAX_LEVEL) {
-            // El nuevo cubo hereda una velocidad combinada suave
-            const combinedVx = (a.vx + b.vx) * 0.4;
-            const combinedVy = (a.vy + b.vy) * 0.4 - 1.5; // Un mini brinco estético
-            
-            createCube(nextLvl, midX - VISUAL_SIZE[nextLvl]/2, midY - VISUAL_SIZE[nextLvl]/2, combinedVx, combinedVy);
-            
-            // SUMAR PUNTOS
-            puntaje += nextLvl * 10; 
-            const displayPuntos = document.getElementById("puntos");
-            if (displayPuntos) {
-              displayPuntos.textContent = puntaje;
-            }
-            
-            if (nextLvl === MAX_LEVEL) {
-              triggerWin(); 
-            }
-          }
+          const cuboFusionado = Bodies.rectangle(midX, midY, nuevoTamaño, nuevoTamaño, {
+            restitution: 0.2,
+            friction: 0.1,
+            render: getCubeRenderOptions(nuevoNivel),
+            plugin: { level: nuevoNivel, id: Math.random() }
+          });
+
+          // Le aplicamos un leve impulso hacia arriba para simular un salto satisfactorio en la fusión
+          Body.setVelocity(cuboFusionado, { x: (Math.random() - 0.5) * 2, y: -4 });
+          Composite.add(world, cuboFusionado);
+
+          // 🌟 SISTEMA DE PUNTUACIÓN INTEGRADO DE FORMA ESTABLE
+          puntaje += nuevoNivel * 10;
+          document.getElementById("puntos").textContent = puntaje;
         }
       }
     }
-  }
-}
+  });
+});
 
-// ---------- game loop / update ----------
-function update(timestamp){
-  if (!lastTime) lastTime = timestamp;
-  let dt = (timestamp - lastTime) / 16.666;
-  if (dt > 3) dt = 3; 
-  lastTime = timestamp;
-
-  ctx.clearRect(0,0,width,height);
-  step(dt);
-  objects = objects.filter(o => !o._remove);
-
-  for (let o of objects){
-    if (images[o.level]) {
-      ctx.drawImage(images[o.level], o.x, o.y, o.w, o.h);
-    } else {
-      ctx.fillStyle = "#ff5722";
-      ctx.fillRect(o.x, o.y, o.w, o.h);
-      ctx.fillStyle = "white";
-      ctx.font = "bold 16px Arial";
-      ctx.textAlign = "center";
-      ctx.fillText("L" + o.level, o.x + o.w/2, o.y + o.h/2 + 5);
+// ---------- BOTÓN DE REINICIO ----------
+document.getElementById("btnReset").addEventListener("click", () => {
+  // Limpiar todos los cubos sueltos dejando solo el suelo y las paredes estáticas
+  const todosLosCuerpos = Composite.allBodies(world);
+  todosLosCuerpos.forEach(body => {
+    if (!body.isStatic) {
+      Composite.remove(world, body);
     }
-  }
+  });
 
-  requestAnimationFrame(update);
-}
-requestAnimationFrame(update);
-
-function triggerWin(){
-  win = true;
-  winOverlay.style.display = "flex";
-}
-
-function resetGame(){
-  objects = [];
-  win = false;
-  winOverlay.style.display = "none";
-  nextLevel = randomSpawnLevel();
-  
+  // Resetear puntaje
   puntaje = 0;
-  const displayPuntos = document.getElementById("puntos");
-  if (displayPuntos) displayPuntos.textContent = puntaje;
-  
-  renderNextPreview();
-}
+  document.getElementById("puntos").textContent = puntaje;
 
-if (btnReset) btnReset.addEventListener('click', resetGame);
-if (btnWinReset) btnWinReset.addEventListener('click', resetGame);
+  // Resetear niveles
+  nextLevel = randomSpawnLevel();
+  actualizarPreview();
+});
