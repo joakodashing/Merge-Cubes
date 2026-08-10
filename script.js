@@ -251,198 +251,51 @@ function step(dt){
         // compute minimal separation using hitboxes
         const overlap = getHitOverlap(a,b);
         if (!overlap) continue;
-        if (Math.abs(overlap.x) < Math.abs(overlap.y)){
-          const sep = overlap.x;
-          a.x -= sep/2;
-          b.x += sep/2;
-          const vx1 = a.vx, vx2 = b.vx;
-          a.vx = vx2 * RESTITUTION;
-          b.vx = vx1 * RESTITUTION;
-        } else {
-          const sep = overlap.y;
-          a.y -= sep/2;
-          b.y += sep/2;
-          const vy1 = a.vy, vy2 = b.vy;
-          a.vy = vy2 * RESTITUTION;
-          b.vy = vy1 * RESTITUTION;
-        }
+                // ... Lógica que ya tenías de rebotes ...
+          if (Math.abs(overlap.x) < Math.abs(overlap.y)){
+            const sep = overlap.x;
+            a.x -= sep/2;
+            b.x += sep/2;
+            const vx1 = a.vx, vx2 = b.vx;
+            a.vx = vx2 * RESTITUTION;
+            b.vx = vx1 * RESTITUTION;
+          } else {
+            const sep = overlap.y;
+            a.y -= sep/2;
+            b.y += sep/2;
+            const vy1 = a.vy, vy2 = b.vy;
+            a.vy = vy2 * RESTITUTION;
+            b.vy = vy1 * RESTITUTION;
+          }
 
-        // merging same level
-                  // ... (Viene de la lógica de rebotes que pasaste arriba) ...
-          a.vy = vy2 * RESTITUTION;
-          b.vy = vy1 * RESTITUTION;
-        }
-
-        // 🔍 BUSCA ESTA SECCIÓN MÁS ABAJO EN TU ARCHIVO SCRIPT.JS:
-        if (a.level === b.level) {
-          a._remove = true;
-          b._remove = true;
-          
-          // El juego calcula el centro para fusionar los cubos
-          const midX = (a.x + a.w/2 + b.x + b.w/2) / 2;
-          const midY = (a.y + a.h/2 + b.y + b.h/2) / 2;
-          const nextLvl = a.level + 1;
-          
-          if (nextLvl <= MAX_LEVEL) {
-            // El juego crea el nuevo cubo más grande
-            createCube(nextLvl, midX - VISUAL_SIZE[nextLvl]/2, midY - VISUAL_SIZE[nextLvl]/2);
+          // 🌟 ¡AQUÍ ESTÁ TU SISTEMA DE PUNTOS Y FUSIÓN REPARADO!
+          if (a.level === b.level) {
+            a._remove = true;
+            b._remove = true;
             
-            // 📍 ¡JUSTO AQUÍ ENTRALAS TRES LÍNEAS DE TU PUNTUACIÓN!
-            // Multiplica el nuevo nivel por 10 (ej: nivel 2 da 20pts, nivel 3 da 30pts, etc.)
-            puntaje += nextLvl * 10; 
+            const midX = (a.x + a.w/2 + b.x + b.w/2) / 2;
+            const midY = (a.y + a.h/2 + b.y + b.h/2) / 2;
+            const nextLvl = a.level + 1;
             
-            // Actualiza el texto en tu pantalla de inmediato
-            document.getElementById("puntos").textContent = puntaje;
-            
-            if (nextLvl === MAX_LEVEL) {
-              triggerWin(); // Si llega al nivel máximo, gana
+            if (nextLvl <= MAX_LEVEL) {
+              createCube(nextLvl, midX - VISUAL_SIZE[nextLvl]/2, midY - VISUAL_SIZE[nextLvl]/2);
+              
+              // Suma los puntos equitativamente según el cubo resultante
+              puntaje += nextLvl * 10; 
+              
+              // Actualiza el marcador del HTML si este existe
+              const txtPuntos = document.getElementById("puntos");
+              if (txtPuntos) {
+                txtPuntos.textContent = puntaje;
+              }
+              
+              if (nextLvl === MAX_LEVEL && typeof triggerWin === "function") {
+                triggerWin(); 
+              }
             }
           }
-        }
-
-        } else {
-          // slight push
-          const dx = (a.x + a.w/2) - (b.x + b.w/2);
-          const dy = (a.y + a.h/2) - (b.y + b.h/2);
-          const d = Math.hypot(dx,dy) || 1;
-          const push = 1.2;
-          a.vx += (dx/d) * push;
-          a.vy += (dy/d) * push * 0.12;
-          b.vx -= (dx/d) * push;
-          b.vy -= (dy/d) * push * 0.12;
         }
       }
     }
   }
-
-  // cleanup removals
-  objects = objects.filter(o => !o._removed);
 }
-
-// hitbox helpers: top-left of hitbox inside visual
-function hitBoxRect(o){
-  const hitX = o.x + (o.w - o.hitW)/2;
-  const hitY = o.y + (o.h - o.hitH)/2;
-  return {left: hitX, top: hitY, right: hitX + o.hitW, bottom: hitY + o.hitH, width: o.hitW, height: o.hitH};
-}
-function hitOverlap(a,b){
-  const A = hitBoxRect(a);
-  const B = hitBoxRect(b);
-  return !(A.right <= B.left || A.left >= B.right || A.bottom <= B.top || A.top >= B.bottom);
-}
-function getHitOverlap(a,b){
-  const A = hitBoxRect(a), B = hitBoxRect(b);
-  const left = Math.max(A.left, B.left);
-  const right = Math.min(A.right, B.right);
-  const top = Math.max(A.top, B.top);
-  const bottom = Math.min(A.bottom, B.bottom);
-  if (right <= left || bottom <= top) return null;
-  const overlapX = (right - left);
-  const overlapY = (bottom - top);
-  // direction sign from a to b
-  const axc = A.left + A.width/2, ayc = A.top + A.height/2;
-  const bxc = B.left + B.width/2, byc = B.top + B.height/2;
-  const dirX = bxc > axc ? 1 : -1;
-  const dirY = byc > ayc ? 1 : -1;
-  return {x: overlapX * dirX, y: overlapY * dirY};
-}
-
-// ---------- merging ----------
-function handleMerge(a,b){
-  if (a._merging || b._merging) return;
-  a._merging = b._merging = true;
-  // if both level10 => win
-  if (a.level === MAX_LEVEL && b.level === MAX_LEVEL){
-    a._removed = true; b._removed = true;
-    setTimeout(()=> showWin(), 160);
-    return;
-  }
-  const newLevel = Math.min(a.level + 1, MAX_LEVEL);
-  const nx = (a.x + b.x)/2;
-  const ny = (a.y + b.y)/2;
-  a._removed = true; b._removed = true;
-  // create new with small pop
-  setTimeout(()=> {
-    createCube(newLevel, nx, ny - 6, (Math.random()-0.5)*2, -4);
-  }, 90);
-}
-
-// ---------- rendering ----------
-function render(){
-  // clear
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  ctx.save();
-  // optional background subtle
-  ctx.fillStyle = "rgba(255,255,255,0.01)";
-  ctx.fillRect(0,0,width,height);
-
-  // draw objects (sorted by y for nicer overlap)
-  objects.sort((a,b)=> (a.y + a.h) - (b.y + b.h));
-  for (let o of objects){
-    if (images[o.level]) {
-      ctx.drawImage(images[o.level], o.x, o.y, o.w, o.h);
-    } else {
-      // fallback rectangle with label
-      ctx.fillStyle = "#6b7280";
-      ctx.fillRect(o.x, o.y, o.w, o.h);
-      ctx.fillStyle = "white";
-      ctx.font = "bold 16px Arial";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText("L"+o.level, o.x + o.w/2, o.y + o.h/2);
-    }
-    // debug hitbox (comment out if not needed)
-    // const hb = hitBoxRect(o);
-    // ctx.strokeStyle = 'rgba(255,0,0,0.25)'; ctx.strokeRect(hb.left,hb.top,hb.width,hb.height);
-  }
-
-  ctx.restore();
-}
-
-// ---------- main loop ----------
-function loop(ts){
-  if (!lastTime) lastTime = ts;
-  const dtMs = Math.min(40, ts - lastTime);
-  const dt = dtMs / 16.666; // scale
-  step(dt);
-  render();
-  lastTime = ts;
-  if (!win) requestAnimationFrame(loop);
-}
-requestAnimationFrame(loop);
-
-// ---------- initial spawn ----------
-function spawnInitial(n=6){
-  objects = [];
-  for (let i=0;i<n;i++){
-    const lvl = Math.random() < 0.7 ? 1 : 2;
-    const px = Math.random() * (width - VISUAL_SIZE[lvl]);
-    const py = 20 + Math.random() * (height*0.18);
-    createCube(lvl, px, py, (Math.random()-0.5)*1.6, (Math.random()-0.5)*1.2);
-  }
-}
-spawnInitial(6);
-
-// ---------- win overlay ----------
-function showWin(){
-  win = true;
-  winOverlay.classList.remove('hidden');
-}
-function resetGame(){
-  win = false;
-  winOverlay.classList.add('hidden');
-  objects = [];
-  spawnInitial(6);
-  nextLevel = randomSpawnLevel();
-  renderNextPreview();
-  lastTime = 0;
-  requestAnimationFrame(loop);
-   puntaje = 0;
-   document.getElementById("puntos").textContent = puntaje;
-
-}
-btnReset.addEventListener('click', resetGame);
-btnWinReset.addEventListener('click', resetGame);
-
-// ensure next preview draw after some time (images may load)
-setTimeout(()=> renderNextPreview(), 400);
