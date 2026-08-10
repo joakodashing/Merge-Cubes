@@ -305,7 +305,7 @@ function step(dt){
           if (nextLvl <= MAX_LEVEL) {
             createCube(nextLvl, midX - VISUAL_SIZE[nextLvl]/2, midY - VISUAL_SIZE[nextLvl]/2);
             
-            // LÓGICA DE PUNTOS: Nivel resultante por 10 puntos
+            // LÓGICA DE PUNTOS
             puntaje += nextLvl * 10; 
             const displayPuntos = document.getElementById("puntos");
             if (displayPuntos) {
@@ -324,3 +324,49 @@ function step(dt){
 
 // ---------- game loop / update ----------
 function update(timestamp){
+  if (!lastTime) lastTime = timestamp;
+  let dt = (timestamp - lastTime) / 16.666;
+  if (dt > 3) dt = 3; 
+  lastTime = timestamp;
+
+  ctx.clearRect(0,0,width,height);
+  step(dt);
+  objects = objects.filter(o => !o._remove);
+
+  for (let o of objects){
+    if (images[o.level]) {
+      ctx.drawImage(images[o.level], o.x, o.y, o.w, o.h);
+    } else {
+      ctx.fillStyle = "#ff5722";
+      ctx.fillRect(o.x, o.y, o.w, o.h);
+      ctx.fillStyle = "white";
+      ctx.font = "bold 16px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText("L" + o.level, o.x + o.w/2, o.y + o.h/2 + 5);
+    }
+  }
+
+  requestAnimationFrame(update);
+}
+requestAnimationFrame(update);
+
+function triggerWin(){
+  win = true;
+  winOverlay.style.display = "flex";
+}
+
+function resetGame(){
+  objects = [];
+  win = false;
+  winOverlay.style.display = "none";
+  nextLevel = randomSpawnLevel();
+  
+  puntaje = 0;
+  const displayPuntos = document.getElementById("puntos");
+  if (displayPuntos) displayPuntos.textContent = puntaje;
+  
+  renderNextPreview();
+}
+
+if (btnReset) btnReset.addEventListener('click', resetGame);
+if (btnWinReset) btnWinReset.addEventListener('click', resetGame);
