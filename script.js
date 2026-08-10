@@ -1,3 +1,5 @@
+let puntaje = 0;
+
 /* script.js — Merge Cubes Suika-like (square hitboxes, visual scaling)
    Put images in: images/cube1.png ... images/cube10.png
 */
