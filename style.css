@@ -21,17 +21,16 @@ html,body{height:100%;margin:0;font-family:Inter,Arial,Helvetica,sans-serif;back
 #controls button{background:var(--accent);border:0;padding:8px 12px;border-radius:10px;color:white;cursor:pointer}
 #controls .info{font-size:13px;color:rgba(230,238,248,0.75)}
 
-#gameCanvas, #game-container canvas {
-  display:block;
-  margin:90px auto 24px;
-  background: linear-gradient(180deg,#071029 0%, #081726 100%);
-  width: calc(min(960px, 96vw));
-  height: calc(min(1600px, 96vh - 120px));
-  max-height: calc(96vh - 120px);
-  border-radius:12px;
-  box-shadow: 0 16px 40px rgba(2,6,23,0.7);
-  touch-action: none;
+/* 🌟 Esto le da el borde, color y sombra al cuadro de juego sin importar el nombre */
+#gameCanvas canvas, #game-container canvas {
+    display: block;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    border: 4px solid #3d3d3d;
+    border-radius: 12px;
+    background: #111111;
+    margin-top: 20px;
 }
+
 
 /* WIN overlay */
 #winOverlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(1,2,6,0.6);z-index:50}
