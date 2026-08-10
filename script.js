@@ -253,22 +253,24 @@ function getHitOverlap(a, b) {
   };
 }
 
-// ---------- physics step STABLE (ANTI-GLITCH) ----------
+// ---------- physics step TOTALMENTE ESTABLECIDO (ANTI-GLITCH GENERAL) ----------
 function step(dt){
-  const MAX_SPEED = 15; // 🛑 Límite máximo de velocidad para evitar que salgan disparados
+  const MAX_SPEED = 12; // Capa de seguridad para evitar velocidades absurdas
 
+  // 1. Aplicar gravedad y limitar velocidad por fotograma
   for (let o of objects){
     o.vy += GRAVITY * dt;
     o.x += o.vx * dt;
     o.y += o.vy * dt;
     o.vx *= FRICTION;
 
-    // Control de velocidad máxima (Speed Clamping)
+    // Freno de mano automático (Speed Clamping)
     if (o.vx > MAX_SPEED) o.vx = MAX_SPEED;
     if (o.vx < -MAX_SPEED) o.vx = -MAX_SPEED;
     if (o.vy > MAX_SPEED) o.vy = MAX_SPEED;
     if (o.vy < -MAX_SPEED) o.vy = -MAX_SPEED;
 
+    // Rebotes contra paredes y suelo
     if (o.x < 0){ o.x = 0; o.vx = -o.vx * RESTITUTION; }
     if (o.x + o.w > width){ o.x = width - o.w; o.vx = -o.vx * RESTITUTION; }
     if (o.y + o.h > height){
@@ -279,33 +281,47 @@ function step(dt){
     if (o.y < 0){ o.y = 0; o.vy = 0; }
   }
 
+  // 2. Resolver choques entre CUALQUIER cubo (igual o diferente)
   for (let i=0;i<objects.length;i++){
     for (let j=i+1;j<objects.length;j++){
       const a = objects[i], b = objects[j];
       if (a._remove || b._remove) continue;
+      
       if (hitOverlap(a,b)){
         const overlap = getHitOverlap(a,b);
         if (!overlap) continue;
-        
-        // Separación física inmediata para evitar que se queden atorados
+
+        // Factor de penetración seguro (0.55): los separa un 5% más para romper el bucle del choque
+        const PUSH_FACTOR = 0.55; 
+
+        // Separación en el eje X
         if (Math.abs(overlap.x) < Math.abs(overlap.y)){
           const sep = overlap.x;
-          a.x -= sep * 0.51; // Un 1% extra evita que se queden solapados en el siguiente cuadro
-          b.x += sep * 0.51;
+          a.x -= sep * PUSH_FACTOR;
+          b.x += sep * PUSH_FACTOR;
+          
+          // Intercambio de energías elásticas (Rebote real)
           const vx1 = a.vx, vx2 = b.vx;
           a.vx = vx2 * RESTITUTION;
           b.vx = vx1 * RESTITUTION;
-        } else {
+        } 
+        // Separación en el eje Y (Evita que las pilas colapsen y se atraviesen)
+        else {
           const sep = overlap.y;
-          a.y -= sep * 0.51;
-          b.y += sep * 0.51;
+          a.y -= sep * PUSH_FACTOR;
+          b.y += sep * PUSH_FACTOR;
+          
           const vy1 = a.vy, vy2 = b.vy;
-          a.vy = vy2 * RESTITUTION;
-          b.vy = vy1 * RESTITUTION;
+          // Si el cubo viene cayendo desde arriba, amortiguamos el rebote para que se asiente de forma pesada
+          a.vy = vy2 * RESTITUTION * 0.5;
+          b.vy = vy1 * RESTITUTION * 0.5;
+          
+          if (Math.abs(a.vy) < 0.5) a.vy = 0;
+          if (Math.abs(b.vy) < 0.5) b.vy = 0;
         }
 
-        // SISTEMA DE FUSIÓN + MARCADOR DE PUNTOS
-        if (a.level === b.level) {
+        // 3. Si además de chocar son DEL MISMO NIVEL, se fusionan
+        if (a.level === b.level && (Date.now() - a.spawnTime > 200) && (Date.now() - b.spawnTime > 200)) {
           a._remove = true;
           b._remove = true;
           
@@ -314,9 +330,13 @@ function step(dt){
           const nextLvl = a.level + 1;
           
           if (nextLvl <= MAX_LEVEL) {
-            createCube(nextLvl, midX - VISUAL_SIZE[nextLvl]/2, midY - VISUAL_SIZE[nextLvl]/2);
+            // El nuevo cubo hereda una velocidad combinada suave
+            const combinedVx = (a.vx + b.vx) * 0.4;
+            const combinedVy = (a.vy + b.vy) * 0.4 - 1.5; // Un mini brinco estético
             
-            // LÓGICA DE PUNTOS
+            createCube(nextLvl, midX - VISUAL_SIZE[nextLvl]/2, midY - VISUAL_SIZE[nextLvl]/2, combinedVx, combinedVy);
+            
+            // SUMAR PUNTOS
             puntaje += nextLvl * 10; 
             const displayPuntos = document.getElementById("puntos");
             if (displayPuntos) {
