@@ -268,8 +268,38 @@ function step(dt){
         }
 
         // merging same level
-        if (a.level === b.level){
-          handleMerge(a,b);
+                  // ... (Viene de la lógica de rebotes que pasaste arriba) ...
+          a.vy = vy2 * RESTITUTION;
+          b.vy = vy1 * RESTITUTION;
+        }
+
+        // 🔍 BUSCA ESTA SECCIÓN MÁS ABAJO EN TU ARCHIVO SCRIPT.JS:
+        if (a.level === b.level) {
+          a._remove = true;
+          b._remove = true;
+          
+          // El juego calcula el centro para fusionar los cubos
+          const midX = (a.x + a.w/2 + b.x + b.w/2) / 2;
+          const midY = (a.y + a.h/2 + b.y + b.h/2) / 2;
+          const nextLvl = a.level + 1;
+          
+          if (nextLvl <= MAX_LEVEL) {
+            // El juego crea el nuevo cubo más grande
+            createCube(nextLvl, midX - VISUAL_SIZE[nextLvl]/2, midY - VISUAL_SIZE[nextLvl]/2);
+            
+            // 📍 ¡JUSTO AQUÍ ENTRALAS TRES LÍNEAS DE TU PUNTUACIÓN!
+            // Multiplica el nuevo nivel por 10 (ej: nivel 2 da 20pts, nivel 3 da 30pts, etc.)
+            puntaje += nextLvl * 10; 
+            
+            // Actualiza el texto en tu pantalla de inmediato
+            document.getElementById("puntos").textContent = puntaje;
+            
+            if (nextLvl === MAX_LEVEL) {
+              triggerWin(); // Si llega al nivel máximo, gana
+            }
+          }
+        }
+
         } else {
           // slight push
           const dx = (a.x + a.w/2) - (b.x + b.w/2);
