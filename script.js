@@ -165,4 +165,7 @@ document.getElementById("btnReset").addEventListener("click", () => {
   // Resetear niveles
   nextLevel = randomSpawnLevel();
   actualizarPreview();
-});
+
+    if (btnReset) btnReset.addEventListener('click', resetGame);
+  if (btnWinReset) btnWinReset.addEventListener('click', resetGame);
+}); // 🌟 ESTO CIERRA EL ESCUCHADOR DE CARGA SEGURO
