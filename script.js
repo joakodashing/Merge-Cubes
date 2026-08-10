@@ -30,12 +30,12 @@ const engine = Engine.create({ gravity: { y: 1.2 } }); // Gravedad hacia abajo e
 const world = engine.world;
 
 const render = Render.create({
-  element: document.getElementById("game-container"),
+  element: document.getElementById("game-container"), // 🌟 CORREGIDO: Ahora coincide perfectamente con tu HTML
   engine: engine,
   options: {
     width: WIDTH,
     height: HEIGHT,
-    wireframes: false, // Desactivado para que use las imágenes comerciales reales
+    wireframes: false, // Puedes dejarlo en false para ver tus imágenes originales
     background: '#141414'
   }
 });
