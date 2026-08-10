@@ -5,7 +5,7 @@ let puntaje = 0;
 */
 
 // ---------- CONFIG ----------
-const IMAGE_FOLDER = "./images"; // El "./" fuerza a GitHub a buscar en la ruta correcta del repositorio
+const IMAGE_FOLDER = "images"; // El "./" fuerza a GitHub a buscar en la ruta correcta del repositorio
 const MAX_LEVEL = 10;
 
 // visual sizes (pixels) for each level (index by level)
