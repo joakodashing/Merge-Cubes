@@ -437,6 +437,9 @@ function resetGame(){
   renderNextPreview();
   lastTime = 0;
   requestAnimationFrame(loop);
+   puntaje = 0;
+   document.getElementById("puntos").textContent = puntaje;
+
 }
 btnReset.addEventListener('click', resetGame);
 btnWinReset.addEventListener('click', resetGame);
