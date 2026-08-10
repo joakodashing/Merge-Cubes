@@ -111,10 +111,10 @@ Events.on(engine, 'collisionStart', (event) => {
         const nivelActual = bodyA.plugin.level;
         const nuevoNivel = nivelActual + 1;
 
-        // Si no han sido eliminados ya en este fotograma...
-        if (Composite.allBodies(world).includes(bodyA) && Composite.allBodies(world).includes(b)) {
-          return; // Prevenir doble ejecución accidental
-        }
+        // ✅ CÓDIGO CORREGIDO:
+        if (Composite.allBodies(world).includes(bodyA) && Composite.allBodies(world).includes(bodyB)) {
+        return; 
+      }
 
         // Eliminar del mundo los dos cubos pequeños de forma limpia
         Composite.remove(world, bodyA);
