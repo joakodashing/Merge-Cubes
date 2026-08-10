@@ -45,4 +45,22 @@ html,body{height:100%;margin:0;font-family:Inter,Arial,Helvetica,sans-serif;back
 @media (max-width:420px){
   #nextPreview{width:56px;height:56px}
   #aimCanvas{width:56px;height:56px}
+  #marcador {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Arial', sans-serif;
+    font-size: 32px;
+    font-weight: bold;
+    color: #ffffff;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 10px 25px;
+    border-radius: 12px;
+    border: 2px solid #4caf50;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    z-index: 100;
+    letter-spacing: 2px;
+}
+
 }
