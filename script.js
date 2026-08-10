@@ -5,7 +5,7 @@ let puntaje = 0;
 */
 
 // ---------- CONFIG ----------
-const IMAGE_FOLDER = "images"; // folder containing cube1..cube10
+const IMAGE_FOLDER = "./images"; // folder containing cube1..cube10
 const MAX_LEVEL = 10;
 
 // visual sizes (pixels) for each level (index by level)
