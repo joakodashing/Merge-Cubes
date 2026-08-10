@@ -5,7 +5,7 @@ let puntaje = 0;
 */
 
 // ---------- CONFIG ----------
-const IMAGE_FOLDER = "./images"; // folder containing cube1..cube10
+const IMAGE_FOLDER = "./images"; // El "./" fuerza a GitHub a buscar en la ruta correcta del repositorio
 const MAX_LEVEL = 10;
 
 // visual sizes (pixels) for each level (index by level)
@@ -84,7 +84,6 @@ for (let i=1;i<=MAX_LEVEL;i++){
   img.src = `${IMAGE_FOLDER}/cube${i}.png`;
   img.onload = ()=> { images[i] = img; };
   img.onerror = ()=> { images[i] = null; }; // graceful fallback
-  images[i] = null;
 }
 
 // ---------- state ----------
@@ -192,14 +191,11 @@ function launchFromPreview(){
   const centerY = pr.top + pr.height/2;
   const tx = dragState ? dragState.x : centerX;
   const ty = dragState ? dragState.y : centerY;
-  // velocity scaled from drag vector (reverse so dragging away gives velocity)
   const vx = (centerX - tx) * 0.09;
   const vy = (centerY - ty) * 0.09;
-  // convert to canvas local coords
   const rect = canvas.getBoundingClientRect();
   const spawnX = (centerX - rect.left) * (canvas.width / rect.width) / devicePixelRatio;
   const spawnY = SPAWN_Y;
-  // create cube (centered visually)
   createCube(nextLevel, spawnX - VISUAL_SIZE[nextLevel]/2, spawnY - VISUAL_SIZE[nextLevel]/2, vx, vy);
   nextLevel = randomSpawnLevel();
   renderNextPreview();
@@ -222,33 +218,63 @@ function createCube(level, x, y, vx=0, vy=0){
   return obj;
 }
 
-// ---------- PHYSICS STEP REPARADO Y CON PUNTOS ----------
+// ---------- box helper math functions ----------
+function hitOverlap(a, b) {
+  return (a.x + (a.w - a.hitW)/2 < b.x + (b.w - b.hitW)/2 + b.hitW &&
+          a.x + (a.w - a.hitW)/2 + a.hitW > b.x + (b.w - b.hitW)/2 &&
+          a.y + (a.h - a.hitH)/2 < b.y + (b.h - b.hitH)/2 + b.hitH &&
+          a.y + (a.h - a.hitH)/2 + a.hitH > b.y + (b.h - b.hitH)/2);
+}
+
+function getHitOverlap(a, b) {
+  const ax1 = a.x + (a.w - a.hitW)/2;
+  const ax2 = ax1 + a.hitW;
+  const ay1 = a.y + (a.h - a.hitH)/2;
+  const ay2 = ay1 + a.hitH;
+
+  const bx1 = b.x + (b.w - b.hitW)/2;
+  const bx2 = bx1 + b.hitW;
+  const by1 = b.y + (b.h - b.hitH)/2;
+  const by2 = by1 + b.hitH;
+
+  const overlapX = Math.min(ax2, bx2) - Math.max(ax1, bx1);
+  const overlapY = Math.min(ay2, by2) - Math.max(ay1, by1);
+
+  if (overlapX <= 0 || overlapY <= 0) return null;
+
+  const centerXA = ax1 + a.hitW / 2;
+  const centerXB = bx1 + b.hitW / 2;
+  const centerYA = ay1 + a.hitH / 2;
+  const centerYB = by1 + b.hitH / 2;
+
+  return {
+    x: centerXA < centerXB ? -overlapX : overlapX,
+    y: centerYA < centerYB ? -overlapY : overlapY
+  };
+}
+
+// ---------- physics step ----------
 function step(dt){
-  // integrate
   for (let o of objects){
     o.vy += GRAVITY * dt;
     o.x += o.vx * dt;
     o.y += o.vy * dt;
     o.vx *= FRICTION;
-    // keep image inside canvas bounds (visual bounding)
     if (o.x < 0){ o.x = 0; o.vx = -o.vx * RESTITUTION; }
     if (o.x + o.w > width){ o.x = width - o.w; o.vx = -o.vx * RESTITUTION; }
     if (o.y + o.h > height){
       o.y = height - o.h;
       o.vy = -o.vy * RESTITUTION;
-      // small damping on floor
       if (Math.abs(o.vy) < 0.8) o.vy = 0;
     }
     if (o.y < 0){ o.y = 0; o.vy = 0; }
   }
 
-  // collisions (O(n^2))
   for (let i=0;i<objects.length;i++){
     for (let j=i+1;j<objects.length;j++){
       const a = objects[i], b = objects[j];
       if (a._remove || b._remove) continue;
       if (hitOverlap(a,b)){
-        // compute minimal separation using hitboxes
         const overlap = getHitOverlap(a,b);
         if (!overlap) continue;
         if (Math.abs(overlap.x) < Math.abs(overlap.y)){
@@ -267,7 +293,7 @@ function step(dt){
           b.vy = vy1 * RESTITUTION;
         }
 
-        // SISTEMA DE FUSIÓN Y PUNTOS EN LINEA
+        // SISTEMA DE FUSIÓN + MARCADOR DE PUNTOS
         if (a.level === b.level) {
           a._remove = true;
           b._remove = true;
@@ -279,21 +305,22 @@ function step(dt){
           if (nextLvl <= MAX_LEVEL) {
             createCube(nextLvl, midX - VISUAL_SIZE[nextLvl]/2, midY - VISUAL_SIZE[nextLvl]/2);
             
-            // Sumar puntos en base al nivel alcanzado
+            // LÓGICA DE PUNTOS: Nivel resultante por 10 puntos
             puntaje += nextLvl * 10; 
-            
-            // Actualizar la interfaz gráfica de forma segura
             const displayPuntos = document.getElementById("puntos");
             if (displayPuntos) {
               displayPuntos.textContent = puntaje;
             }
             
-            if (nextLvl === MAX_LEVEL && typeof triggerWin === "function") {
+            if (nextLvl === MAX_LEVEL) {
               triggerWin(); 
-            }   
+            }
           }
         }
       }
     }
   }
 }
+
+// ---------- game loop / update ----------
+function update(timestamp){
