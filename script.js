@@ -290,7 +290,7 @@ function step(dt){
             
             if (nextLvl === MAX_LEVEL && typeof triggerWin === "function") {
               triggerWin(); 
-            }
+            }   
           }
         }
       }
