@@ -24,16 +24,16 @@ const VISUAL_SIZE = {
 
 // hitbox sizes (internal collision square), max 85px as requested
 const HITBOX_SIZE = {
-  1: 55,
-  2: 60,
-  3: 67,
-  4: 74,
-  5: 80,
-  6: 85,
-  7: 85,
-  8: 85,
-  9: 85,
-  10:85
+  1: 80,
+  2: 90,
+  3: 100,
+  4: 110,
+  5: 120,
+  6: 128,
+  7: 135,
+  8: 145,
+  9: 155,
+  10:165
 };
 
 const GRAVITY = 0.9;
