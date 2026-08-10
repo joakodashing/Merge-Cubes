@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Merge Cubes - Matter.js Edition</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Cargamos el motor de física Matter.js -->
-    <script src="https://cloudflare.com"></script>
 </head>
 <body>
 
@@ -22,14 +20,11 @@
     <!-- Botón de reinicio -->
     <button id="btnReset">Reiniciar Juego</button>
 
-    <!-- Contenedor principal donde Matter.js dibujará el juego -->
+    <!-- Contenedor del Canvas del Juego -->
     <div id="game-container"></div>
 
+    <!-- Cambiamos la carga para asegurar que no se congele -->
+    <script src="https://jsdelivr.net"></script>
     <script src="script.js"></script>
-</body>
-</html>
-
-
-  <script src="script.js"></script>
 </body>
 </html>
