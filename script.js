@@ -222,7 +222,7 @@ function createCube(level, x, y, vx=0, vy=0){
   return obj;
 }
 
-// ---------- physics step ----------
+// ---------- PHYSICS STEP REPARADO Y CON PUNTOS ----------
 function step(dt){
   // integrate
   for (let o of objects){
@@ -251,47 +251,45 @@ function step(dt){
         // compute minimal separation using hitboxes
         const overlap = getHitOverlap(a,b);
         if (!overlap) continue;
-                // ... Lógica que ya tenías de rebotes ...
-          if (Math.abs(overlap.x) < Math.abs(overlap.y)){
-            const sep = overlap.x;
-            a.x -= sep/2;
-            b.x += sep/2;
-            const vx1 = a.vx, vx2 = b.vx;
-            a.vx = vx2 * RESTITUTION;
-            b.vx = vx1 * RESTITUTION;
-          } else {
-            const sep = overlap.y;
-            a.y -= sep/2;
-            b.y += sep/2;
-            const vy1 = a.vy, vy2 = b.vy;
-            a.vy = vy2 * RESTITUTION;
-            b.vy = vy1 * RESTITUTION;
-          }
+        if (Math.abs(overlap.x) < Math.abs(overlap.y)){
+          const sep = overlap.x;
+          a.x -= sep/2;
+          b.x += sep/2;
+          const vx1 = a.vx, vx2 = b.vx;
+          a.vx = vx2 * RESTITUTION;
+          b.vx = vx1 * RESTITUTION;
+        } else {
+          const sep = overlap.y;
+          a.y -= sep/2;
+          b.y += sep/2;
+          const vy1 = a.vy, vy2 = b.vy;
+          a.vy = vy2 * RESTITUTION;
+          b.vy = vy1 * RESTITUTION;
+        }
 
-          // 🌟 ¡AQUÍ ESTÁ TU SISTEMA DE PUNTOS Y FUSIÓN REPARADO!
-          if (a.level === b.level) {
-            a._remove = true;
-            b._remove = true;
+        // SISTEMA DE FUSIÓN Y PUNTOS EN LINEA
+        if (a.level === b.level) {
+          a._remove = true;
+          b._remove = true;
+          
+          const midX = (a.x + a.w/2 + b.x + b.w/2) / 2;
+          const midY = (a.y + a.h/2 + b.y + b.h/2) / 2;
+          const nextLvl = a.level + 1;
+          
+          if (nextLvl <= MAX_LEVEL) {
+            createCube(nextLvl, midX - VISUAL_SIZE[nextLvl]/2, midY - VISUAL_SIZE[nextLvl]/2);
             
-            const midX = (a.x + a.w/2 + b.x + b.w/2) / 2;
-            const midY = (a.y + a.h/2 + b.y + b.h/2) / 2;
-            const nextLvl = a.level + 1;
+            // Sumar puntos en base al nivel alcanzado
+            puntaje += nextLvl * 10; 
             
-            if (nextLvl <= MAX_LEVEL) {
-              createCube(nextLvl, midX - VISUAL_SIZE[nextLvl]/2, midY - VISUAL_SIZE[nextLvl]/2);
-              
-              // Suma los puntos equitativamente según el cubo resultante
-              puntaje += nextLvl * 10; 
-              
-              // Actualiza el marcador del HTML si este existe
-              const txtPuntos = document.getElementById("puntos");
-              if (txtPuntos) {
-                txtPuntos.textContent = puntaje;
-              }
-              
-              if (nextLvl === MAX_LEVEL && typeof triggerWin === "function") {
-                triggerWin(); 
-              }
+            // Actualizar la interfaz gráfica de forma segura
+            const displayPuntos = document.getElementById("puntos");
+            if (displayPuntos) {
+              displayPuntos.textContent = puntaje;
+            }
+            
+            if (nextLvl === MAX_LEVEL && typeof triggerWin === "function") {
+              triggerWin(); 
             }
           }
         }
