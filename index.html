@@ -1,30 +1,37 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Merge Cubes - Geometry Dash Edition</title>
-    <link rel="stylesheet" href="style.css">    
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Merge Cubes — Suika Style</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-    <div id="marcador">SCORE: <span id="puntos">0</span></div>
-
-    <div id="previewContainer">
-        <div>SIGUIENTE:</div>
+  <div id="ui">
+    <div id="topbar">
+      <div id="nextWrapper">
+        <div id="nextLabel">Próximo</div>
         <div id="nextPreview"></div>
+        <canvas id="aimCanvas"></canvas>
+      </div>
+      <div id="controls">
+        <button id="btnReset">Reiniciar</button>
+        <div id="info">Arrastra el "Próximo" para apuntar, suelta para lanzar.</div>
+      </div>
     </div>
+  </div>
 
-    <button id="btnReset">Reiniciar Juego</button>
+  <canvas id="gameCanvas"></canvas>
 
-    <!-- Contenedor único para el motor gráfico -->
-    <!-- 1. Contenedor de la pantalla de juego -->
-    <div id="game-container"></div>
+  <!-- WIN overlay -->
+  <div id="winOverlay" class="hidden">
+    <div id="winBox">
+      <h1>¡GANASTE!</h1>
+      <p>Fusionaste dos cube10 🎉</p>
+      <button id="btnWinReset">Restablecer</button>
+    </div>
+  </div>
 
-    <!-- 2. Cargamos el motor que acabas de guardar localmente -->
-    <script src="matter.min.js"></script>
-
-    <!-- 3. Cargamos la lógica de tus cubos y marcadores -->
-    <script src="script.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
