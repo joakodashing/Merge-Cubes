@@ -4,10 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Merge Cubes - Geometry Dash Edition</title>
-    <link rel="stylesheet" href="style.css">
-    <!-- Reemplaza la línea vieja de Cloudflare por esta limpia y local -->
-    <script src="matter.min.js"></script>
-    
+    <link rel="stylesheet" href="style.css">    
 </head>
 <body>
 
@@ -21,8 +18,13 @@
     <button id="btnReset">Reiniciar Juego</button>
 
     <!-- Contenedor único para el motor gráfico -->
+    <!-- 1. Contenedor de la pantalla de juego -->
     <div id="game-container"></div>
 
+    <!-- 2. Cargamos el motor que acabas de guardar localmente -->
+    <script src="matter.min.js"></script>
+
+    <!-- 3. Cargamos la lógica de tus cubos y marcadores -->
     <script src="script.js"></script>
 </body>
 </html>
