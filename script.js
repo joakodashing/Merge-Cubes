@@ -31,13 +31,16 @@ const engine = Engine.create({ gravity: { y: 1.2 } }); // Gravedad hacia abajo e
 const world = engine.world;
 
 const render = Render.create({
-  element: document.getElementById("game-container"), // 🌟 CORREGIDO: Ahora coincide perfectamente con tu HTML
+  element: contenedorJuego,
   engine: engine,
   options: {
     width: WIDTH,
     height: HEIGHT,
-    wireframes: false, // Puedes dejarlo en false para ver tus imágenes originales
-    background: '#141414'
+    wireframes: false,
+    
+    // 🌟 RUTA LOCAL ACTUALIZADA: Apunta a tu nueva subcarpeta
+    // Recuerda escribir las mayúsculas y minúsculas exactamente igual que en GitHub
+    background: 'images/backgrounds/fondo-gd.jpg' 
   }
 });
 
