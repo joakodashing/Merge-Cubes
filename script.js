@@ -171,4 +171,5 @@ document.getElementById("btnReset").addEventListener("click", () => {
 
     if (btnReset) btnReset.addEventListener('click', resetGame);
   if (btnWinReset) btnWinReset.addEventListener('click', resetGame);
-}); // 🌟 ESTO CIERRA EL ESCUCHADOR DE CARGA SEGURO
+});
+}
