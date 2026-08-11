@@ -3,28 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Merge Cubes - Matter.js Edition</title>
+    <title>Merge Cubes - Geometry Dash Edition</title>
     <link rel="stylesheet" href="style.css">
+    
+    <!-- 🌟 IMPORTANTE: Movido al HEAD para garantizar que se cargue antes de iniciar el juego -->
+    <script src="https://jsdelivr.net"></script>
 </head>
 <body>
 
-    <!-- Marcador de puntuación flotante -->
     <div id="marcador">SCORE: <span id="puntos">0</span></div>
 
-    <!-- Contenedor del próximo cubo -->
     <div id="previewContainer">
         <div>SIGUIENTE:</div>
         <div id="nextPreview"></div>
     </div>
 
-    <!-- Botón de reinicio -->
     <button id="btnReset">Reiniciar Juego</button>
 
-    <!-- Contenedor del Canvas del Juego -->
+    <!-- Contenedor único para el motor gráfico -->
     <div id="game-container"></div>
 
-    <!-- Cambiamos la carga para asegurar que no se congele -->
-    <script src="https://jsdelivr.net"></script>
     <script src="script.js"></script>
 </body>
 </html>
