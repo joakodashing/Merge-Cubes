@@ -173,4 +173,3 @@ const botonReset = document.getElementById("btnReset");
 if (botonReset) {
   botonReset.addEventListener("click", resetearJuego);
 }
- 
