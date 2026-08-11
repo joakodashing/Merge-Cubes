@@ -151,9 +151,8 @@ Events.on(engine, 'collisionStart', (event) => {
   });
 });
 
-// ---------- BOTÓN DE REINICIO ----------
-document.getElementById("btnReset").addEventListener("click", () => {
-  // Limpiar todos los cubos sueltos dejando solo el suelo y las paredes estáticas
+// ---------- FUNCIÓN DE REINICIO ----------
+function resetearJuego() {
   const todosLosCuerpos = Composite.allBodies(world);
   todosLosCuerpos.forEach(body => {
     if (!body.isStatic) {
@@ -161,15 +160,16 @@ document.getElementById("btnReset").addEventListener("click", () => {
     }
   });
 
-  // Resetear puntaje
   puntaje = 0;
-  document.getElementById("puntos").textContent = puntaje;
+  const displayPuntos = document.getElementById("puntos");
+  if (displayPuntos) displayPuntos.textContent = puntaje;
 
-  // Resetear niveles
   nextLevel = randomSpawnLevel();
   actualizarPreview();
+}
 
-    if (btnReset) btnReset.addEventListener('click', resetGame);
-  if (btnWinReset) btnWinReset.addEventListener('click', resetGame);
-});
+// Vinculamos el botón de reinicio de forma directa y segura
+const botonReset = document.getElementById("btnReset");
+if (botonReset) {
+  botonReset.addEventListener("click", resetearJuego);
 }
