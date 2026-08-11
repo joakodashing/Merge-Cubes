@@ -40,7 +40,7 @@ const render = Render.create({
     
     // 🌟 RUTA LOCAL ACTUALIZADA: Apunta a tu nueva subcarpeta
     // Recuerda escribir las mayúsculas y minúsculas exactamente igual que en GitHub
-    background: 'images/backgrounds/fondo-gd.jpg' 
+    background: 'images/backgrounds/game_bg_01_001-uhd.png' 
   }
 });
 
